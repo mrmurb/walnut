@@ -1,4 +1,5 @@
 {
   "name": "Walnut",
-  "homeassistant": "2023.12.0"
+  "homeassistant": "2023.12.0",
+  "render_readme": true
 }

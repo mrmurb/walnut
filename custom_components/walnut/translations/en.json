@@ -1,0 +1,17 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Select device",
+                "description": "Which device would you like to add?"
+            },
+            "description": {
+                "title": "Location",
+                "description": "Optional information of device location."
+            }
+        },
+        "abort": {
+            "no_devices_found": "No unconfigured Walnut devices found."
+        }
+    }
+}

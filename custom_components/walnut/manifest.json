@@ -3,7 +3,7 @@
   "name": "Walnut",
   "bluetooth": [
     {
-      "connectable": false,
+      "connectable": true,
       "service_uuid": "00001100-0f58-2ba7-72c3-4d8d58fa16de"
     }
   ],
@@ -13,5 +13,5 @@
   "documentation": "https://github.com/mrmurb/walnut/README.md",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/mrmurb/walnut/issues",
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

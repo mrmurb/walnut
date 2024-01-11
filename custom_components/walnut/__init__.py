@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS, Platform
 from homeassistant.core import CoreState, HomeAssistant
 
-from .const import DOMAIN
+from .const import CONF_POLL_INTERVAL, DOMAIN
 from .coordinator import WalnutActiveBluetoothProcessorCoordinator
 from .walnut import WalnutDeviceData
 
@@ -25,7 +25,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("Entry: %s", entry.as_dict())
     address = entry.data[CONF_ADDRESS]
     assert address is not None
+
     data = WalnutDeviceData()
+    if CONF_POLL_INTERVAL in entry.options:
+        data.set_poll_interval(entry.options.get(CONF_POLL_INTERVAL))
 
     def _needs_poll(
         service_info: BluetoothServiceInfoBleak, last_poll: float | None
@@ -54,28 +57,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
         return await data.async_poll(connectable_device)
 
-    def _update_method(data: BluetoothServiceInfoBleak) -> dict[str, float | int]:
-        sensor_values: dict[str, float] = {}
-        # TODO: maybe not use strings?
-        sensor_values["address"] = data.address
-        sensor_values["rssi"] = data.advertisement.rssi
-
-        idx = 0
-        while idx < len(data.manufacturer_data.get(0x03D3)):
-            sensor_and_data = data.manufacturer_data.get(0x03D3)[idx : idx + 4]
-            sensor_id = int.from_bytes(sensor_and_data[0:2], "big")
-            sensor_data = sensor_and_data[2:4]
-
-            if sensor_id == 1:  # Temperature
-                sensor_values["temperature"] = (
-                    int.from_bytes(sensor_data, "big", signed=True) / 10
-                )
-            elif sensor_id == 2:
-                sensor_values["humidity"] = int.from_bytes(sensor_data, "big") / 10
-
-            idx += 4
-
-        return sensor_values
+    async def _update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Handle options update."""
+        if CONF_POLL_INTERVAL in entry.options:
+            data.set_poll_interval(entry.options[CONF_POLL_INTERVAL])
 
     coordinator = hass.data.setdefault(DOMAIN, {})[
         entry.entry_id
@@ -94,5 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # only start after all platforms have had a chance to subscribe
         coordinator.async_start()
     )
+    entry.async_on_unload(entry.add_update_listener(_update_listener))
 
     return True

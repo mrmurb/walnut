@@ -1,4 +1,6 @@
-import logging  # noqa: D100
+"""Walnut device."""
+
+import logging
 
 from bleak import BleakError, BLEDevice
 from bleak_retry_connector import (
@@ -26,9 +28,19 @@ class WalnutSensor(StrEnum):
     BATTERY = "battery"
 
 
-class WalnutDeviceData(BluetoothData):  # noqa: D101
-    def __init__(self):  # noqa: D107
+class WalnutDeviceData(BluetoothData):
+    """Walnut device."""
+
+    _poll_interval: int | None
+
+    def set_poll_interval(self, poll_interval: int) -> None:
+        """Set the poll interval."""
+        self._poll_interval = poll_interval
+
+    def __init__(self):
+        """Initialize the Walnut device."""
         super().__init__()
+        self._poll_interval = None
 
     def _start_update(self, service_info: BluetoothServiceInfo) -> None:
         """Update from BLE advertisement data."""
@@ -80,9 +92,10 @@ class WalnutDeviceData(BluetoothData):  # noqa: D101
     def poll_needed(  # noqa: D102
         self, service_info: BluetoothServiceInfo, last_poll: float | None
     ) -> bool:
+        _LOGGER.debug("Configured poll interval: %s", self._poll_interval)
         if last_poll is None:
             return True
-        return last_poll > 10  # TODO: what is a good time? maybe config value.
+        return last_poll > self._poll_interval or 14400
 
     async def async_poll(self, ble_device: BLEDevice) -> SensorUpdate:  # noqa: D102
         _LOGGER.debug("Polling Walnut device: %s", ble_device.address)

@@ -8,13 +8,17 @@ from habluetooth import BluetoothServiceInfoBleak
 import voluptuous as vol
 
 from homeassistant.components.bluetooth.api import async_discovered_service_info
-from homeassistant.config_entries import ConfigFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    OptionsFlowWithConfigEntry,
+)
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import AbortFlow, FlowResult
 from homeassistant.helpers.device_registry import format_mac
 
-from .const import DOMAIN, SERVICE_UUID
+from .const import CONF_POLL_INTERVAL, DOMAIN, SERVICE_UUID
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,6 +31,12 @@ class WalnutConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._discovered_advs: dict[str, BluetoothServiceInfoBleak] = {}
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> WalnutOptionsFlowHandler:
+        """Get the options flow for this handler."""
+        return WalnutOptionsFlowHandler(config_entry)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -91,3 +101,39 @@ class WalnutConfigFlow(ConfigFlow, domain=DOMAIN):
         if not self._discovered_advs:
             _LOGGER.debug("No devices found")
             raise AbortFlow("no_devices_found")
+
+
+class WalnutOptionsFlowHandler(OptionsFlowWithConfigEntry):
+    """Walnut options flow handler."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the Walnut options."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            poll_interval = (
+                user_input[CONF_POLL_INTERVAL] * 3600
+            )  # convert seconds to hours
+            _LOGGER.debug(poll_interval)
+            pass
+
+        return self.async_show_form(
+            step_id="init",
+            errors=errors,
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_POLL_INTERVAL,
+                        ): vol.All(
+                            vol.Coerce(int),
+                            vol.Range(min=1, max=24),
+                        ),
+                    }
+                ),
+                {
+                    CONF_POLL_INTERVAL: 4,
+                },
+            ),
+        )

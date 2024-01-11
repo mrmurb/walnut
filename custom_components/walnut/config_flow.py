@@ -112,7 +112,10 @@ class WalnutOptionsFlowHandler(OptionsFlowWithConfigEntry):
         """Manage the Walnut options."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            # save the thing
+            poll_interval = (
+                user_input[CONF_POLL_INTERVAL] * 3600
+            )  # convert seconds to hours
+            _LOGGER.debug(poll_interval)
             pass
 
         return self.async_show_form(

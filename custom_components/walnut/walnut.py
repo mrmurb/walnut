@@ -82,7 +82,7 @@ class WalnutDeviceData(BluetoothData):  # noqa: D101
     ) -> bool:
         if last_poll is None:
             return True
-        return last_poll > 10  # TODO: what is a good time? maybe config value.
+        return last_poll > 14400  # TODO: what is a good time? maybe config value.
 
     async def async_poll(self, ble_device: BLEDevice) -> SensorUpdate:  # noqa: D102
         _LOGGER.debug("Polling Walnut device: %s", ble_device.address)
